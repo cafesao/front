@@ -1,25 +1,52 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useEffect } from 'react'
+import SocketIOClient from 'socket.io-client'
+import './App.css'
 
-function App() {
+const URL = 'http://localhost:4000'
+
+const socket = SocketIOClient(URL, {
+  transports: ['websocket'],
+})
+
+const App = () => {
+  const [response, setResponse] = useState([''])
+  const [message, setMessage] = useState('')
+
+  function handleSubmit(e) {
+    e.preventDefault()
+    socket.emit('message', message)
+    setMessage('')
+  }
+
+  function handleChangeInput(e) {
+    e.preventDefault()
+    setMessage(e.target.value)
+  }
+
+  useEffect(() => {
+    socket.on('update', (messageRes) => {
+      setResponse((old) => old.concat(messageRes))
+    })
+  }, [])
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          value={message}
+          onChange={handleChangeInput}
+          autoFocus={true}
+        ></input>
+        <button type="submit">Send</button>
+      </form>
+      <div className="chat">
+        {response.map((value) => (
+          <p>{value}</p>
+        ))}
+      </div>
     </div>
-  );
+  )
 }
 
-export default App;
+export default App
